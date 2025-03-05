@@ -1,8 +1,6 @@
 ﻿using AuchanTest.DTOs;
 using AuchanTest.Entities;
 using CsvHelper;
-using Microsoft.EntityFrameworkCore;
-using System;
 using System.Globalization;
 
 namespace AuchanTest.Repositories
@@ -23,15 +21,13 @@ namespace AuchanTest.Repositories
             using (var reader = new StreamReader("car_price_dataset.csv"))
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
-                records = csv.GetRecords<Car>().ToList();
-
-               
+                records = csv.GetRecords<Car>().ToList();               
             }
 
             return new CarsRepository(records);
         }
 
-        public IEnumerable<Car> GetCars(SearchCriteria search, SortCriteria sort)
+        public SearchResult GetCars(SearchCriteria search, SortCriteria sort, int page, int pageSize)
         {
             var query = _cars;
 
@@ -65,8 +61,6 @@ namespace AuchanTest.Repositories
                 query = query.Where(x => x.Price <= search.MaxPrice);
             }
 
-
-
             if (sort != null)
             {
                 var orderFuncDictionary = new Dictionary<SortColumn, Func<Car, object>>
@@ -78,7 +72,6 @@ namespace AuchanTest.Repositories
 
                 if (sort.Ascending)
                 {
-                    //TODO: column dynamics
                     query = query.OrderBy(orderFuncDictionary[sort.Column]);
                 }
                 else
@@ -87,10 +80,29 @@ namespace AuchanTest.Repositories
                 }
             }
 
+            var aggregations = new ResultStatistics();
 
-            return query.ToList();
+            if (query.Any())
+            {
+                aggregations.AveragePrice = Convert.ToInt32(query.Average(x => x.Price));
+                aggregations.MostCommonFuelType = query.GroupBy(x => x.Fuel_Type)
+                    .OrderByDescending(x => x.Count())
+                    .Select(x => x.Key)
+                    .FirstOrDefault().ToString();
+                aggregations.NewestCarYear = query.Max(x => x.Year);
+            };
 
-
+            return new SearchResult
+            {
+                Results = query.Skip((page - 1) * pageSize).Take(pageSize),
+                Aggregations = aggregations,
+                Pagination = new PaginationResult
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = query.Count()
+                }
+            };
         }
     }
 }

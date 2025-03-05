@@ -11,6 +11,12 @@ namespace AuchanTest.Controllers
     [ApiController]
     public class CarsController : ControllerBase
     {
+        private readonly CarsRepository _carsRepository;
+
+        public CarsController(CarsRepository carsRepository)
+        {
+            this._carsRepository = carsRepository;
+        }
 
         [HttpGet("search")]
         public IActionResult GetCars([FromQuery] SearchCriteria search, [FromQuery] string sortBy, [FromQuery] int page, [FromQuery] int pageSize)
@@ -33,30 +39,9 @@ namespace AuchanTest.Controllers
                 };
             }            
 
-            var cars = CarsRepository.Create().GetCars(search, sort);
+            var result = _carsRepository.GetCars(search, sort, page, pageSize);
 
-            var aggregations = new ResultStatistics();
-
-            if(cars.Any())
-            {
-                aggregations.AveragePrice = Convert.ToInt32(cars.Average(x => x.Price));
-                aggregations.MostCommonFuelType = cars.GroupBy(x => x.Fuel_Type)
-                    .OrderByDescending(x => x.Count())
-                    .Select(x => x.Key)
-                    .FirstOrDefault().ToString();
-                aggregations.NewestCarYear = cars.Max(x => x.Year);
-            };
-
-            return Ok(new SearchResult{
-                Results = cars.Skip((page-1)* pageSize).Take(pageSize),
-                Aggregations = aggregations,
-                Pagination = new PaginationResult
-                {
-                    Page = page,
-                    PageSize = pageSize,
-                    TotalCount = cars.Count()
-                }
-            });
+            return Ok(result);
         }
 
     }
