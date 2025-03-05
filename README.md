@@ -6,7 +6,7 @@
 - If the user inputs anything other then 'desc' for sorting then by default it is 'asc' (no validation on this part)
 - There is an enum for FuelType since it has to be an exact match for the search criteria and it's easier to map to an enum. There is no enum for other fields, like Transmission, since the requirements did not specify any other such constraints.
 
-## Examples of api calls I've used using chrome:
+## Examples of api calls I've used in chrome:
   
 /api/cars/search?brand=ford&minYear=2023&maxPrice=95000&minPrice=10000&sortBy=year_asc&page=2&pageSize=10&fuelType=Electric
 
