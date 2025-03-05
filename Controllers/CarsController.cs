@@ -24,20 +24,26 @@ namespace AuchanTest.Controllers
 
             if (page == 0 || pageSize == 0)
             {
-                //TODO : validation
+                return BadRequest("Page and PageSize must be valid");
+            }
+
+            if (search.MinPrice > search.MaxPrice)
+            {
+                return BadRequest("Invalid price range");
             }
 
             var sortParts = sortBy.Split('_');
 
             SortCriteria sort = null;
 
+            //in case of invalid sort column, there will be no sorting
             if (Enum.TryParse<SortColumn>(sortParts[0], out var column))
             {
                 sort = new SortCriteria { 
                     Column = column, 
                     Ascending = sortParts.Length ==1 || sortParts[1].ToLower() != "desc" 
                 };
-            }            
+            }
 
             var result = _carsRepository.GetCars(search, sort, page, pageSize);
 

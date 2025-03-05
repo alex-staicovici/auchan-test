@@ -63,6 +63,7 @@ namespace AuchanTest.Repositories
 
             if (sort != null)
             {
+                //a dictionary to map the sort column to the corresponding property func
                 var orderFuncDictionary = new Dictionary<SortColumn, Func<Car, object>>
                 {
                     {SortColumn.year, x => x.Year},
@@ -92,14 +93,16 @@ namespace AuchanTest.Repositories
                 aggregations.NewestCarYear = query.Max(x => x.Year);
             };
 
+            var pageResults = query.Skip((page - 1) * pageSize).Take(pageSize);
+
             return new SearchResult
             {
-                Results = query.Skip((page - 1) * pageSize).Take(pageSize),
+                Results = pageResults,
                 Aggregations = aggregations,
                 Pagination = new PaginationResult
                 {
                     Page = page,
-                    PageSize = pageSize,
+                    PageSize = pageResults.Count(),
                     TotalCount = query.Count()
                 }
             };
